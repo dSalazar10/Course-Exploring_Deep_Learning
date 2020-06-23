@@ -1,3 +1,6 @@
 
 NeuralNetworks/perceptron/__pycache__/linear_model.cpython-37.pyc
 NeuralNetworks/student_admission/__pycache__/nn.cpython-37.pyc
+.DS_Store
+NeuralNetworks/student_admission/drilled_down_student_data.csv
+*.csv
