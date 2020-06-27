@@ -95,7 +95,7 @@ class NeuralNetwork(object):
     # Weight step (input to hidden)
     delta_weights_i_h += hidden_error_term * X[:, None]
     # Weight step (hidden to output)
-    delta_weights_h_o += np.array([(hidden_outputs * output_error_term)]).T
+    delta_weights_h_o += np.dot(hidden_outputs.T, output_error_term)
     return delta_weights_i_h, delta_weights_h_o
 
   def update_weights(self, delta_weights_i_h, delta_weights_h_o, n_records):
@@ -139,7 +139,7 @@ output_nodes = 1
 
 if 0:
   # # Data pre-processing
-  # rides = pd.read_csv('Bike-Sharing-Dataset/hour.csv')
+  rides = pd.read_csv('Bike-Sharing-Dataset/hour.csv')
   # # drill down into the data
   # one_hot_data = ut.one_hot_encoder(rides, ['season', 'weathersit', 'mnth', 'hr', 'weekday'])
   # # drop data that might not be useful to the NN
