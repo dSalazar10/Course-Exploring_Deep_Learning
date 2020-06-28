@@ -14,7 +14,7 @@ def test_network(net, trainloader):
 
     # Create Variables for the inputs and targets
     inputs = Variable(images)
-    targets = Variable(images)
+    targets = Variable(labels)
 
     # Clear the gradients from all Variables
     optimizer.zero_grad()
