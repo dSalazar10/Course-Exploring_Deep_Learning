@@ -22,8 +22,6 @@ class Network(nn.Module):
     self.style_weight = beta
     # get the "features" portion of VGG19 (we will not need the "classifier" portion)
     self.model = models.vgg19(pretrained=True).features
-    # Define the first-order gradient-based optimization of Stochastic Gradient Descent
-    self.optimizer = optim.Adam(None, lr=0.003)
     # freeze all VGG parameters since we're only optimizing the target image
     for param in self.model.parameters():
       param.requires_grad_(False)
@@ -179,7 +177,7 @@ class Network(nn.Module):
                     'conv4_1': 0.2,
                     'conv5_1': 0.2}
     # Add target image parameters to optimizer
-    self.optimizer.add_param_group([target])
+    optimizer = optim.Adam([target], lr=0.003)
     # For displaying the target image, intermittently
     if vis is True:
       show_every = 400
@@ -207,11 +205,11 @@ class Network(nn.Module):
         # calculate the total loss: α(L_content) + β(L_style)
         total_loss = self.content_weight * content_loss + self.style_weight * style_loss
         # Zero the existing gradients
-        self.optimizer.zero_grad()
+        optimizer.zero_grad()
         # Backward pass
         total_loss.backward()
         # Gradient Descent Step
-        self.optimizer.step()
+        optimizer.step()
         # Display intermediate images and print the loss
         if vis is True and e % show_every == 0:
             print('Total loss: ', total_loss.item())
