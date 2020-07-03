@@ -7,26 +7,30 @@ import torch.nn as nn
 class Network(nn.Module):
     def __init__(self):
         super(Network, self).__init__()
-        self.encoder = nn.Sequential(nn.Conv2d(1, 16, 3, padding=1),
-                                    nn.ReLU(),
-                                    nn.MaxPool2d(2,2),     
-                                    nn.Conv2d(16, 4, 3, padding=1),
-                                    nn.ReLU(),
-                                    nn.MaxPool2d(2, 2)
-                                    )
-        self.decoder = nn.Sequential(nn.ConvTranspose2d(4, 16, 2, stride=2),
-                                    nn.ReLU(),
-                                    nn.ConvTranspose2d(16, 1, 2, stride=2),
-                                    nn.Sigmoid()
-                                    )
+        self.model = nn.ModuleDict({
+            'encoder': nn.Sequential(
+                nn.Conv2d(1, 16, 3, padding=1),
+                nn.ReLU(),
+                nn.MaxPool2d(2,2),     
+                nn.Conv2d(16, 4, 3, padding=1),
+                nn.ReLU(),
+                nn.MaxPool2d(2, 2)
+            ),
+            'decoder': nn.Sequential(
+                nn.ConvTranspose2d(4, 16, 2, stride=2),
+                nn.ReLU(),
+                nn.ConvTranspose2d(16, 1, 2, stride=2),
+                nn.Sigmoid()
+            )
+        })
         # specify loss function
         self.criterion = nn.MSELoss()
         # specify loss function
-        self.optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001)
 
     def forward(self, x):
-        x = self.encoder(x)        
-        return self.decoder(x)
+        x = self.model['encoder'](x)
+        return self.model['decoder'](x)
 
     def fit(self, train_loader):
         # number of epochs to train the model
@@ -64,25 +68,26 @@ class Network(nn.Module):
                 ))
 
 
+if 0:
+    # convert data to torch.FloatTensor
+    transform = transforms.ToTensor()
 
-# convert data to torch.FloatTensor
-transform = transforms.ToTensor()
+    # load the training and test datasets
+    train_data = datasets.MNIST(root='data', train=True,
+                                    download=True, transform=transform)
+    test_data = datasets.MNIST(root='data', train=False,
+                                    download=True, transform=transform)
 
-# load the training and test datasets
-train_data = datasets.MNIST(root='data', train=True,
-                                   download=True, transform=transform)
-test_data = datasets.MNIST(root='data', train=False,
-                                  download=True, transform=transform)
+    # Create training and test dataloaders
 
-# Create training and test dataloaders
+    num_workers = 0
+    # how many samples per batch to load
+    batch_size = 20
 
-num_workers = 0
-# how many samples per batch to load
-batch_size = 20
+    # prepare data loaders
+    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=num_workers)
+    test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, num_workers=num_workers)
 
-# prepare data loaders
-train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=num_workers)
-test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, num_workers=num_workers)
-
-# initialize the NN
-model = Network()
+    # initialize the NN
+    n = Network()
+    n.fit(train_loader)

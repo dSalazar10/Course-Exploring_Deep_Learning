@@ -6,11 +6,6 @@ import time
 import collections
 import numpy as np
 
-
-class Flatten(nn.Module):
-  def forward(self, input):
-    return input.view(-1, 64 * 4 * 4)
-
 class Network(nn.Module):
   def __init__(self, input_size, output_size, hidden_layers, drop_p=0.25, epochs=5, learn_rate=0.001):
     super(Network, self).__init__()
@@ -24,22 +19,28 @@ class Network(nn.Module):
     self.epochs = epochs
     # three conv layers, flatten image, two linear layers
     # 3, 10, [16, 32, 64, 1024, 500]
-    self.model = nn.Sequential(nn.Conv2d(input_size, hidden_layers[0], 3, padding=1),
-                                nn.ReLU(),
-                                nn.MaxPool2d(2, 2),
-                                nn.Conv2d(hidden_layers[0], hidden_layers[1], 3, padding=1),
-                                nn.ReLU(),
-                                nn.MaxPool2d(2, 2),
-                                nn.Conv2d(hidden_layers[1], hidden_layers[2], 3, padding=1),
-                                nn.ReLU(),
-                                nn.MaxPool2d(2, 2),
-                                Flatten(),
-                                nn.Dropout(p=drop_p),
-                                nn.Linear(hidden_layers[3], hidden_layers[4]),
-                                nn.ReLU(),
-                                nn.Dropout(p=drop_p),
-                                nn.Linear(hidden_layers[4], output_size),
-                                nn.LogSoftmax(dim=1))
+    self.model = nn.ModuleDict({
+      'features': nn.Sequential(
+          nn.Conv2d(input_size, hidden_layers[0], 3, padding=1),
+          nn.ReLU(),
+          nn.MaxPool2d(2, 2),
+          nn.Conv2d(hidden_layers[0], hidden_layers[1], 3, padding=1),
+          nn.ReLU(),
+          nn.MaxPool2d(2, 2),
+          nn.Conv2d(hidden_layers[1], hidden_layers[2], 3, padding=1),
+          nn.ReLU(),
+          nn.MaxPool2d(2, 2)
+      ),
+      'classifier': nn.Sequential(
+        nn.Dropout(p=drop_p),
+        nn.Linear(hidden_layers[3], hidden_layers[4]),
+        nn.ReLU(),
+        nn.Dropout(p=drop_p),
+        nn.Linear(hidden_layers[4], output_size),
+        nn.LogSoftmax(dim=1)
+      )
+    })
+    
     if self.train_on_gpu:
       self.model.cuda()
     # Negative Log Liklihood pairs with LogSoftmax
@@ -54,7 +55,9 @@ class Network(nn.Module):
     Input:
     * x: the collection of elements in a record
     """
-    return self.model(x)
+    x = self.model['features'](x)
+    torch.flatten(x)
+    return self.model['classifier'](x)
 
   def fit(self, trainloader, valloader):
     """
